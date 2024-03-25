@@ -8,8 +8,9 @@ const dbConfig = {
 const dbConnection = async() => {
     let connection;
     try {
-      connection = await oracledb.getConnection(dbConfig);
-      console.log('Conexión exitosa a la base de datos Oracle!');
+      if (connection == null) {
+        connection = await oracledb.getConnection(dbConfig);
+      }
     } catch (err) {
       console.error(err.message);
     }

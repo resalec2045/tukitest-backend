@@ -1,8 +1,8 @@
 
 const express = require('express');
 const { dbConnection } = require('./database/config');
+const cors = require('cors')
 // require('dotenv').config()
-// const cors = require('cors')
 
 // crear el servidor
 const app = express();
@@ -11,7 +11,7 @@ const app = express();
 dbConnection()
 
 // cors
-// app.use(cors())
+app.use(cors())
 
 // Directorio publico
 app.use( express.static('public') );
@@ -21,6 +21,7 @@ app.use( express.json() );
 
 // rutas
 app.use('/api/auth', require('./routes/auth'));
+app.use('/api/auth/login', require('./routes/auth'));
 
 app.get('*', (req, res) => {
     res.sendFile( __dirname + '/public/index.html')
