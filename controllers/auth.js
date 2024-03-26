@@ -6,7 +6,7 @@ const read = async ( req , res = response ) => {
   try {
     connection = await dbConnection();
     const result = await connection.execute(
-      `SELECT * FROM employees`,
+      `SELECT * FROM Estudiante`,
       [],
       { outFormat: oracledb.OUT_FORMAT_OBJECT }
     );
@@ -25,7 +25,7 @@ const login = async ( req , res = response ) => {
     connection = await dbConnection();
     const { email, password } = req.body;
     const result = await connection.execute(
-      `SELECT * FROM employees WHERE email = :email AND employee_id = :password`,
+      `SELECT * FROM Estudiante WHERE Email = :email AND Contrasena = :password`,
       [email, password],
       { outFormat: oracledb.OUT_FORMAT_OBJECT }
     );
