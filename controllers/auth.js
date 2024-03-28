@@ -1,25 +1,22 @@
 const { dbConnection } = require("../database/config");
-const oracledb = require('oracledb');
 
-const read = async ( req , res = response ) => {
+const read = async (req, res = response) => {
   let connection;
   try {
     connection = await dbConnection();
-    const result = await connection.execute(
-      `SELECT * FROM Estudiante`,
-      [],
-      { outFormat: oracledb.OUT_FORMAT_OBJECT }
-    );
+    const result = await connection.execute(`SELECT * FROM Estudiante`, [], {
+      outFormat: oracledb.OUT_FORMAT_OBJECT,
+    });
     res.status(201).json({
       ok: true,
-      usuarios: result.rows
-  });
+      usuarios: result.rows,
+    });
   } catch (err) {
-    console.error('Error al leer registros:', err.message);
+    console.error("Error al leer registros:", err.message);
   }
-}
+};
 
-const login = async ( req , res = response ) => {
+const login = async (req, res = response) => {
   let connection;
   try {
     connection = await dbConnection();
@@ -32,19 +29,19 @@ const login = async ( req , res = response ) => {
     if (result.rows.length === 0) {
       return res.status(404).json({
         ok: false,
-        msg: 'Usuario o contraseña incorrectos'
+        msg: "Usuario o contraseña incorrectos",
       });
     }
     res.status(201).json({
       ok: true,
-      usuario: result.rows[0]
-  });
+      usuario: result.rows[0],
+    });
   } catch (err) {
-    console.error('Error al leer registros:', err.message);
-  } 
-}
+    console.error("Error al leer registros:", err.message);
+  }
+};
 
 module.exports = {
-    read,
-    login
-}
+  read,
+  login,
+};
