@@ -1,3 +1,4 @@
+const OracleDB = require("oracledb");
 const { dbConnection } = require("../database/config");
 
 const read = async (req, res = response) => {
@@ -5,7 +6,7 @@ const read = async (req, res = response) => {
   try {
     connection = await dbConnection();
     const result = await connection.execute(`SELECT * FROM Estudiante`, [], {
-      outFormat: oracledb.OUT_FORMAT_OBJECT,
+      outFormat: OracleDB.OUT_FORMAT_OBJECT,
     });
     res.status(201).json({
       ok: true,
@@ -24,7 +25,7 @@ const login = async (req, res = response) => {
     const result = await connection.execute(
       `SELECT * FROM Estudiante WHERE Email = :email AND Contrasena = :password`,
       [email, password],
-      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+      { outFormat: OracleDB.OUT_FORMAT_OBJECT }
     );
     if (result.rows.length === 0) {
       return res.status(404).json({

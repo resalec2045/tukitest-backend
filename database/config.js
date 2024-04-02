@@ -1,4 +1,5 @@
 const oracledb = require("oracledb");
+
 const dbConfig = {
   user: "system",
   password: "1234",
@@ -8,9 +9,7 @@ const dbConfig = {
 const dbConnection = async () => {
   let connection;
   try {
-    if (connection == null) {
-      connection = await oracledb.getConnection(dbConfig);
-    }
+    connection = await oracledb.getConnection(dbConfig);
   } catch (err) {
     console.error(err.message);
   }
