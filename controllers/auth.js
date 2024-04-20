@@ -23,7 +23,7 @@ const login = async (req, res = response) => {
     connection = await dbConnection();
     const { email, password } = req.body;
     const result = await connection.execute(
-      `SELECT * FROM PERSONA JOIN GRUPO ON GRUPO.PERSONA_ID = PERSONA.ID WHERE Email = :email AND Contrasena = :password`,
+      `SELECT * FROM PERSONA JOIN GRUPO ON GRUPO.PERSONA_ID = PERSONA.ID JOIN ROL ON ROL.PERSONA_ID = PERSONA.ID WHERE Email = :email AND Contrasena = :password`,
       [email, password],
       { outFormat: OracleDB.OUT_FORMAT_OBJECT }
     );
