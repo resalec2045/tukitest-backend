@@ -107,6 +107,92 @@ const getOptionsByQuestion = async (id) => {
   }
 };
 
+const insertOptionsByPerson = async (req, res = response) => {
+  let connection;
+
+  try {
+    connection = await dbConnection();
+
+    // Generar un ID único para esta inserción
+    const ID = Math.floor(Math.random() * 1000000);
+
+    // Obtener los datos del cuerpo de la solicitud
+    const { id: PERSONA_ID, listSelectedAnswer, listQuestions } = req.body;
+
+    if (listSelectedAnswer[0].length === 2) {
+      // Separar los elementos del primer subarray por un punto y coma
+      listSelectedAnswer[0] = [listSelectedAnswer[0].join(";")];
+    }
+
+    const newListSelectedAnswer = aplanarArray(listSelectedAnswer);
+
+    // Convertir las listas a matrices JSON
+    let selectedAnswersJSON = JSON.stringify(newListSelectedAnswer);
+    let questionsJSON = JSON.stringify(listQuestions);
+
+    selectedAnswersJSON = selectedAnswersJSON
+      .replace(/"/g, "'")
+      .replace("[", "")
+      .replace("]", "");
+    questionsJSON = questionsJSON.replace("[", "").replace("]", "");
+
+    const query = `
+    DECLARE
+        p_id NUMBER := null;
+        p_persona_id NUMBER := ${PERSONA_ID};
+        p_listSelectedAnswer SYS.ODCIVARCHAR2LIST := SYS.ODCIVARCHAR2LIST(${selectedAnswersJSON});
+        p_listQuestions SYS.ODCINUMBERLIST := SYS.ODCINUMBERLIST(${questionsJSON});
+    BEGIN
+        INSERTAR_RESPUESTAS(p_id, p_persona_id, p_listSelectedAnswer, p_listQuestions);
+    END;
+    `;
+
+    // Llamar al procedimiento almacenado con los datos proporcionados
+    const result = await connection.execute(
+      query,
+      {},
+      {
+        outFormat: OracleDB.OUT_FORMAT_OBJECT,
+        autoCommit: true,
+      }
+    );
+
+    console.log("Rows affected:", result.rowsAffected);
+
+    res.status(201).json({
+      ok: true,
+    });
+  } catch (err) {
+    console.error("Error al insertar datos:", err.message);
+    res.status(500).json({
+      ok: false,
+      error: "Error al insertar datos",
+    });
+  } finally {
+    if (connection) {
+      try {
+        // Liberar la conexión de vuelta al pool
+        await connection.close();
+      } catch (err) {
+        console.error("Error cerrando la conexión:", err.message);
+      }
+    }
+  }
+};
+
+function aplanarArray(arr) {
+  return arr.flatMap((subarr) => {
+    // Verificar si el elemento es un array
+    if (Array.isArray(subarr)) {
+      // Si es un array, devolver sus elementos
+      return subarr;
+    } else {
+      // Si no es un array, devolverlo tal cual
+      return [subarr];
+    }
+  });
+}
+
 // TODO: REALIZAR
 
 const deleteQuizById = async (req, res = response) => {
@@ -165,4 +251,5 @@ module.exports = {
   updateQuiz,
   getQuizByGrupo,
   getQuestionsByQuiz,
+  insertOptionsByPerson,
 };

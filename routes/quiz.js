@@ -7,7 +7,7 @@ const {
   updateQuiz,
   getQuizByGrupo,
   getQuestionsByQuiz,
-  getOptionsByQuestion,
+  insertOptionsByPerson,
 } = require("../controllers/quiz");
 const { check } = require("express-validator");
 const { validarCampos } = require("../middlewares/validar_campos");
@@ -23,6 +23,8 @@ router.get("/getQuestionsByQuiz/:id", getQuestionsByQuiz);
 
 router.delete("/deleteQuizById/:id", deleteQuizById);
 
+router.post("/insertOptionsByPerson", insertOptionsByPerson);
+
 router.post(
   "/createQuiz",
   [
@@ -33,14 +35,6 @@ router.post(
   createQuiz
 );
 
-router.post(
-  "/updateQuiz",
-  [
-    // check("email", "El email es obligatorio").isEmail(),
-    // check("password", "El password es obligatorio").not().isEmpty(),
-    validarCampos,
-  ],
-  updateQuiz
-);
+router.post("/updateQuiz", [validarCampos], updateQuiz);
 
 module.exports = router;
