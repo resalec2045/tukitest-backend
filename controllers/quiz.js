@@ -193,25 +193,26 @@ function aplanarArray(arr) {
   });
 }
 
-// TODO: REALIZAR
-
-const deleteQuizById = async (req, res = response) => {
+const createQuiz = async (req, res = response) => {
   let connection;
   try {
     connection = await dbConnection();
     // const result = await connection.execute(`SELECT * FROM Estudiante`, [], {
     //   outFormat: oracledb.OUT_FORMAT_OBJECT,
     // });
+    console.log("Body:", req.body);
+    console.log("Quiz:", req.body.listQuestions[1].options);
     res.status(201).json({
       ok: true,
-      quiz: result,
     });
   } catch (err) {
     console.error("Error al leer registros:", err.message);
   }
 };
 
-const createQuiz = async (req, res = response) => {
+// TODO: REALIZAR
+
+const deleteQuizById = async (req, res = response) => {
   let connection;
   try {
     connection = await dbConnection();

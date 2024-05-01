@@ -42,7 +42,29 @@ const login = async (req, res = response) => {
   }
 };
 
+const obtenerGruposByProfesor = async (req, res = response) => {
+  let connection;
+  try {
+    connection = await dbConnection();
+    const { id } = req.params;
+    const result = await connection.execute(
+      `SELECT * FROM GRUPO WHERE PERSONA_ID = :id`,
+      [id],
+      {
+        outFormat: OracleDB.OUT_FORMAT_OBJECT,
+      }
+    );
+    res.status(201).json({
+      ok: true,
+      grupos: result.rows,
+    });
+  } catch (err) {
+    console.error("Error al leer registros:", err.message);
+  }
+};
+
 module.exports = {
   read,
   login,
+  obtenerGruposByProfesor,
 };
