@@ -193,20 +193,222 @@ function aplanarArray(arr) {
   });
 }
 
-const createQuiz = async (req, res = response) => {
+const informe1 = (req, res = response) => {};
+
+const createTest = async (req, res = response) => {
+  try {
+
+    console.log("Datos recibidos:", req.body);
+
+    const quizId = await insertQuiz(req.body);
+
+
+    const idPreguntas = await insertPregunta(req.body, quizId);
+
+    for (let i = 0; i < idPreguntas.length; i++) {
+      console.log("ID de la pregunta:", idPreguntas[i]);
+      await insertOpcion(idPreguntas[i], req.body.listQuestions[i].options);
+    }
+
+    // Llamar a la función para insertar evaluación, pasando el ID del quiz y el JSON de la evaluación
+    await insertEvaluacion(req.body, quizId);
+
+
+  } catch (error) {
+    console.error("Error al llamar a los procedimientos:", error);
+  }
+};
+
+const insertQuiz = async (jsonData) => {
   let connection;
+
   try {
     connection = await dbConnection();
-    // const result = await connection.execute(`SELECT * FROM Estudiante`, [], {
-    //   outFormat: oracledb.OUT_FORMAT_OBJECT,
-    // });
-    console.log("Body:", req.body);
-    console.log("Quiz:", req.body.listQuestions[1].options);
-    res.status(201).json({
-      ok: true,
+
+    const { quiz } = jsonData;
+
+    console.log(quiz);
+
+    const query = `
+      BEGIN
+        INSERTAR_QUIZ(:p_nombre, :p_fecha, :p_tiempo, :p_categoria, :p_cantidad_preguntas, :p_puntuacion_total, :p_hora_programada, :p_aprobacion, :p_tema_id, :p_quiz_id);
+      END;
+    `;
+
+    const bindParams = {
+      p_nombre: quiz.quizName,
+      p_fecha: quiz.level,
+      p_tiempo: parseInt(quiz.totalTime),
+      p_categoria: quiz.categoria,
+      p_cantidad_preguntas: parseInt(quiz.cantPreguntas),
+      p_puntuacion_total: parseInt(quiz.puntuacionTotal),
+      p_hora_programada: quiz.horaProgramada,
+      p_aprobacion: parseInt(quiz.aprobacion),
+      p_tema_id: 1, // Puedes inventar este valor o pasarlo desde el JSON si está disponible
+      p_quiz_id: { dir: OracleDB.BIND_OUT, type: OracleDB.NUMBER },
+    };
+
+    const result = await connection.execute(query, bindParams, {
+      autoCommit: true,
     });
-  } catch (err) {
-    console.error("Error al leer registros:", err.message);
+
+    console.log("Quiz ID:", result);
+    const quizId = result.outBinds.p_quiz_id;
+    console.log("Quiz ID:", quizId);
+
+
+    return quizId;
+
+  } catch (error) {
+    console.error("Error al insertar quiz:", error);
+    throw error;
+  } finally {
+    if (connection) {
+      try {
+        await connection.close();
+      } catch (error) {
+        console.error("Error cerrando la conexión:", error);
+      }
+    }
+  }
+};
+
+const insertPregunta = async (jsonData, quizId) => {
+  let connection;
+
+  try {
+    connection = await dbConnection();
+
+    const { listQuestions } = jsonData;
+
+    //array para guardar los ids de las preguntas
+    let idPreguntas = [];
+
+    for (const pregunta of listQuestions) {
+      const query = `
+        BEGIN
+          INSERTAR_PREGUNTA(:p_titulo, :p_contenido, :p_calificacion, :p_estado, :p_quiz_id, :p_es_publica, :p_pregunta_id);
+        END;
+      `;
+
+      const bindParams = {
+        p_titulo: pregunta.title,
+        p_contenido: pregunta.content,
+        p_calificacion: parseInt(pregunta.grade),
+        p_estado: "A", // Puedes inventar este valor o pasarlo desde el JSON si está disponible
+        p_quiz_id: quizId,
+        p_es_publica: pregunta.isPublic ? "S" : "N", // Convertir a 'S' o 'N' dependiendo del valor de isPublic
+        p_pregunta_id: { dir: OracleDB.BIND_OUT, type: OracleDB.NUMBER },
+      };
+
+      const result = await connection.execute(query, bindParams, {
+        autoCommit: true,
+      });
+
+      idPreguntas.push(result.outBinds.p_pregunta_id);
+    }
+
+    return idPreguntas;
+    
+  } catch (error) {
+    console.error("Error al insertar pregunta:", error);
+    throw error;
+  } finally {
+    if (connection) {
+      try {
+        await connection.close();
+      } catch (error) {
+        console.error("Error cerrando la conexión:", error);
+      }
+    }
+  }
+};
+
+const insertOpcion = async (preguntaId, opciones) => {
+  let connection;
+
+  try {
+    connection = await dbConnection();
+
+    for (const opcion of opciones) {
+
+      console.log("Opción:", opcion);
+      console.log("Pregunta ID de la opcion:", preguntaId);
+
+      const query = `
+        BEGIN
+          INSERTAR_OPCION(:p_texto, :p_pregunta_id, :p_es_correcta, :p_opcion_id);
+        END;
+      `;
+
+      const bindParams = {
+        p_texto: opcion.text,
+        p_pregunta_id: preguntaId,
+        p_es_correcta: opcion.isCorrect ? "S" : "N",
+        p_opcion_id: { dir: OracleDB.BIND_OUT, type: OracleDB.NUMBER },
+      };
+
+      const result = await connection.execute(query, bindParams, {
+        autoCommit: true,
+      });
+
+      const opcionId = result.outBinds.p_opcion_id;
+      console.log("Opción ID:", opcionId);
+
+    }
+  } catch (error) {
+    console.error("Error al insertar opción:", error);
+    throw error;
+  } finally {
+    if (connection) {
+      try {
+        await connection.close();
+      } catch (error) {
+        console.error("Error cerrando la conexión:", error);
+      }
+    }
+  }
+};
+
+const insertEvaluacion = async (jsonData, quizId) => {
+  let connection;
+
+  try {
+    connection = await dbConnection();
+
+    const { quiz } = jsonData;
+
+    const query = `
+      BEGIN
+        INSERTAR_EVALUACION(:p_nota, :p_grupo_id, :p_quiz_id, :p_evaluacion_id);
+      END;
+    `;
+
+    const bindParams = {
+      p_nota: parseInt(quiz.puntuacionTotal), // Puedes ajustar esto según el JSON si es necesario
+      p_grupo_id: 1, // Puedes ajustar esto según el JSON si es necesario
+      p_quiz_id: quizId,
+      p_evaluacion_id: { dir: OracleDB.BIND_OUT, type: OracleDB.NUMBER }
+    };
+
+    const result = await connection.execute(query, bindParams, {
+      autoCommit: true
+    });
+
+    const evaluacionId = result.outBinds.p_evaluacion_id[0];
+
+    console.log("Evaluación ID:", evaluacionId);
+  } catch (error) {
+    console.error("Error al insertar evaluación:", error);
+    throw error;
+  } finally {
+    if (connection) {
+      try {
+        await connection.close();
+      } catch (error) {
+        console.error("Error cerrando la conexión:", error);
+      }
+    }
   }
 };
 
@@ -248,9 +450,10 @@ module.exports = {
   getAllQuiz,
   getQuizById,
   deleteQuizById,
-  createQuiz,
+  createTest,
   updateQuiz,
   getQuizByGrupo,
   getQuestionsByQuiz,
   insertOptionsByPerson,
+  informe1,
 };
