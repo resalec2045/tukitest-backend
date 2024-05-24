@@ -193,15 +193,11 @@ function aplanarArray(arr) {
   });
 }
 
-const informe1 = (req, res = response) => {};
-
 const createTest = async (req, res = response) => {
   try {
-
     console.log("Datos recibidos:", req.body);
 
     const quizId = await insertQuiz(req.body);
-
 
     const idPreguntas = await insertPregunta(req.body, quizId);
 
@@ -212,8 +208,6 @@ const createTest = async (req, res = response) => {
 
     // Llamar a la función para insertar evaluación, pasando el ID del quiz y el JSON de la evaluación
     await insertEvaluacion(req.body, quizId);
-
-
   } catch (error) {
     console.error("Error al llamar a los procedimientos:", error);
   }
@@ -256,9 +250,7 @@ const insertQuiz = async (jsonData) => {
     const quizId = result.outBinds.p_quiz_id;
     console.log("Quiz ID:", quizId);
 
-
     return quizId;
-
   } catch (error) {
     console.error("Error al insertar quiz:", error);
     throw error;
@@ -309,7 +301,6 @@ const insertPregunta = async (jsonData, quizId) => {
     }
 
     return idPreguntas;
-    
   } catch (error) {
     console.error("Error al insertar pregunta:", error);
     throw error;
@@ -331,7 +322,6 @@ const insertOpcion = async (preguntaId, opciones) => {
     connection = await dbConnection();
 
     for (const opcion of opciones) {
-
       console.log("Opción:", opcion);
       console.log("Pregunta ID de la opcion:", preguntaId);
 
@@ -354,7 +344,6 @@ const insertOpcion = async (preguntaId, opciones) => {
 
       const opcionId = result.outBinds.p_opcion_id;
       console.log("Opción ID:", opcionId);
-
     }
   } catch (error) {
     console.error("Error al insertar opción:", error);
@@ -388,11 +377,11 @@ const insertEvaluacion = async (jsonData, quizId) => {
       p_nota: parseInt(quiz.puntuacionTotal), // Puedes ajustar esto según el JSON si es necesario
       p_grupo_id: 1, // Puedes ajustar esto según el JSON si es necesario
       p_quiz_id: quizId,
-      p_evaluacion_id: { dir: OracleDB.BIND_OUT, type: OracleDB.NUMBER }
+      p_evaluacion_id: { dir: OracleDB.BIND_OUT, type: OracleDB.NUMBER },
     };
 
     const result = await connection.execute(query, bindParams, {
-      autoCommit: true
+      autoCommit: true,
     });
 
     const evaluacionId = result.outBinds.p_evaluacion_id[0];
@@ -412,15 +401,27 @@ const insertEvaluacion = async (jsonData, quizId) => {
   }
 };
 
-// TODO: REALIZAR
-
-const deleteQuizById = async (req, res = response) => {
+const informe1 = async (req, res = response) => {
   let connection;
   try {
     connection = await dbConnection();
-    // const result = await connection.execute(`SELECT * FROM Estudiante`, [], {
-    //   outFormat: oracledb.OUT_FORMAT_OBJECT,
-    // });
+    const result = await connection.execute(
+      `
+      DECLARE cursor_result SYS_REFCURSOR;
+          nombre_grupo VARCHAR2(100);    
+          nota NUMBER;
+          nombre_quiz VARCHAR2(100);
+      BEGIN
+          cursor_result := obtener_notas_quizes_por_grupo();    LOOP
+              FETCH cursor_result INTO nombre_grupo, nota, nombre_quiz;        EXIT WHEN cursor_result%NOTFOUND;
+              DBMS_OUTPUT.PUT_LINE('Grupo: ' || nombre_grupo || ', Nota: ' || nota || ', Quiz: ' || nombre_quiz);    END LOOP;
+          CLOSE cursor_result;
+      END;`,
+      [],
+      {
+        outFormat: OracleDB.OUT_FORMAT_OBJECT,
+      }
+    );
     res.status(201).json({
       ok: true,
       quiz: result,
@@ -430,13 +431,29 @@ const deleteQuizById = async (req, res = response) => {
   }
 };
 
-const updateQuiz = async (req, res = response) => {
+const informe2 = async (req, res = response) => {
   let connection;
   try {
     connection = await dbConnection();
-    // const result = await connection.execute(`SELECT * FROM Estudiante`, [], {
-    //   outFormat: oracledb.OUT_FORMAT_OBJECT,
-    // });
+    const result = await connection.execute(``, [], {
+      outFormat: OracleDB.OUT_FORMAT_OBJECT,
+    });
+    res.status(201).json({
+      ok: true,
+      quiz: result,
+    });
+  } catch (err) {
+    console.error("Error al leer registros:", err.message);
+  }
+};
+
+const informe3 = async (req, res = response) => {
+  let connection;
+  try {
+    connection = await dbConnection();
+    const result = await connection.execute(``, [], {
+      outFormat: OracleDB.OUT_FORMAT_OBJECT,
+    });
     res.status(201).json({
       ok: true,
       quiz: result,
@@ -449,11 +466,11 @@ const updateQuiz = async (req, res = response) => {
 module.exports = {
   getAllQuiz,
   getQuizById,
-  deleteQuizById,
   createTest,
-  updateQuiz,
   getQuizByGrupo,
   getQuestionsByQuiz,
   insertOptionsByPerson,
   informe1,
+  informe2,
+  informe3,
 };
