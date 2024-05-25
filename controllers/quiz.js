@@ -405,26 +405,13 @@ const informe1 = async (req, res = response) => {
   let connection;
   try {
     connection = await dbConnection();
-    const result = await connection.execute(
-      `
-      DECLARE cursor_result SYS_REFCURSOR;
-          nombre_grupo VARCHAR2(100);    
-          nota NUMBER;
-          nombre_quiz VARCHAR2(100);
-      BEGIN
-          cursor_result := obtener_notas_quizes_por_grupo();    LOOP
-              FETCH cursor_result INTO nombre_grupo, nota, nombre_quiz;        EXIT WHEN cursor_result%NOTFOUND;
-              DBMS_OUTPUT.PUT_LINE('Grupo: ' || nombre_grupo || ', Nota: ' || nota || ', Quiz: ' || nombre_quiz);    END LOOP;
-          CLOSE cursor_result;
-      END;`,
-      [],
-      {
-        outFormat: OracleDB.OUT_FORMAT_OBJECT,
-      }
-    );
+    const query = `SELECT * FROM TABLE(obtener_notas_quizes_por_grupo())`;
+    const result = await connection.execute(query, [], {
+      outFormat: OracleDB.OUT_FORMAT_OBJECT,
+    });
     res.status(201).json({
       ok: true,
-      quiz: result,
+      quiz: result.rows,
     });
   } catch (err) {
     console.error("Error al leer registros:", err.message);
@@ -435,12 +422,16 @@ const informe2 = async (req, res = response) => {
   let connection;
   try {
     connection = await dbConnection();
-    const result = await connection.execute(``, [], {
-      outFormat: OracleDB.OUT_FORMAT_OBJECT,
-    });
+    const result = await connection.execute(
+      `SELECT * FROM TABLE(reporte_categorias_aprobadas())`,
+      [],
+      {
+        outFormat: OracleDB.OUT_FORMAT_OBJECT,
+      }
+    );
     res.status(201).json({
       ok: true,
-      quiz: result,
+      quiz: result.rows,
     });
   } catch (err) {
     console.error("Error al leer registros:", err.message);
@@ -451,12 +442,16 @@ const informe3 = async (req, res = response) => {
   let connection;
   try {
     connection = await dbConnection();
-    const result = await connection.execute(``, [], {
-      outFormat: OracleDB.OUT_FORMAT_OBJECT,
-    });
+    const result = await connection.execute(
+      `SELECT * FROM TABLE(obtener_notas_por_grupo())`,
+      [],
+      {
+        outFormat: OracleDB.OUT_FORMAT_OBJECT,
+      }
+    );
     res.status(201).json({
       ok: true,
-      quiz: result,
+      quiz: result.rows,
     });
   } catch (err) {
     console.error("Error al leer registros:", err.message);
